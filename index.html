@@ -27,7 +27,7 @@ button{border:1px solid #ffffff88;background:linear-gradient(145deg,#304b39ed,#1
 </style></head><body>
 <div id="game"></div>
 <div id="hud"><div class="panel">🌾 المزرعة السودانية 3D</div><div class="panel" id="status">🚜 الجرار</div><div class="panel" id="money">💰 5,000 ج</div><div class="panel" id="day">☀️ اليوم 1</div></div>
-<div id="help">عالم زراعي سوداني • قنوات ومجرى مائي وقرية • قد الجرار بين الحقول</div>
+<div id="help">عالم زراعي سوداني • بئر وقنوات ري وطرق وقرية • قد الجرار بين الحقول</div>
 <div id="farmMenu"><button id="seed">🌱 بذور: قمح</button><button id="water">💧 ري الحقل</button><button id="fertilize">🧪 تسميد</button><button id="sleep">🌙 اليوم التالي</button><button id="market">🏪 بيع المحصول</button><button id="animals">🐄 شراء بقرة</button><button id="openMap">🗺️ خريطة السودان</button><button id="expand">🔓 فتح الولاية التالية</button></div>
 <div id="stats">🌱 المحصول: 0 | النمو: 0%</div>
 <div id="mapScreen" aria-hidden="true"><div id="mapPanel"><div id="mapHead"><strong>🗺️ خريطة المزرعة السودانية</strong><button id="closeMap">✕</button></div><p id="mapHint">ابدأ من ولاية الجزيرة، وافتح الولايات واحدة بعد الأخرى بتطوير مزرعتك.</p><div id="sudanMap"><svg viewBox="0 0 360 390" role="img" aria-label="خريطة تخطيطية لولايات السودان"><path d="M75 18 L242 26 L286 76 L310 125 L290 173 L313 224 L274 284 L234 350 L165 370 L111 338 L70 290 L42 230 L54 170 L28 111 L48 63 Z" fill="#b8a17a" stroke="#e5d2a8" stroke-width="4"/><g id="stateShapes"></g><text x="180" y="202" text-anchor="middle" fill="#fff" font-size="15" font-weight="bold" opacity=".9">السودان</text></svg></div><div id="stateGrid"></div><div id="mapFoot">تم تحسين مشهد المزرعة بإضافة مجرى مائي وقرية ونخيل وتلال. حدود الولايات في هذه النسخة لا تزال تخطيطية وليست حدوداً رسمية.</div></div></div>
@@ -63,6 +63,23 @@ for(let i=0;i<5;i++){const silo=cyl(scene,1.1,1.25,3.2,0xb9a17a,35+i*4,.0,-34,12
 // تلال رملية في الأفق لتوسيع الإحساس بالعالم المفتوح
 for(let i=0;i<13;i++){const hill=new THREE.Mesh(new THREE.SphereGeometry(1,16,10),mat(i%2?0x9b8358:0x89734f));hill.scale.set(10+(i%4)*4,2.5+(i%3),7+(i%5)*2);hill.position.set(-90+i*15,-.8,-105-(i%3)*10);hill.receiveShadow=true;scene.add(hill)}
 
+// تفاصيل إضافية ظاهرة حول نقطة بداية اللاعب: طرق، بئر، قنوات، سياج ومناطق زراعية
+function dirtPath(points,width=3){for(let i=0;i<points.length-1;i++){const a=points[i],b=points[i+1],dx=b[0]-a[0],dz=b[1]-a[1],len=Math.hypot(dx,dz),m=new THREE.Mesh(new THREE.BoxGeometry(width,.07,len),mat(0x786044));m.position.set((a[0]+b[0])/2,.035,(a[1]+b[1])/2);m.rotation.y=Math.atan2(dx,dz);m.receiveShadow=true;scene.add(m)}}
+dirtPath([[4,8],[13,4],[22,-3],[27,-15],[27,-35]],3.4);
+dirtPath([[-5,7],[-13,1],[-22,-5],[-28,-15]],2.8);
+// بئر ريفي مع حافة حجرية ودلو وساقية بسيطة
+const well=new THREE.Group();well.position.set(-13,0,8);scene.add(well);cyl(well,1.25,1.4,.7,0x9b8a6a,0,.35,0,20);cyl(well,.92,.92,.08,0x245d75,0,.73,0,20);for(const x of [-1.05,1.05])box(well,.16,2.1,.16,0x704a2b,x,1.65,0);box(well,2.5,.16,.18,0x704a2b,0,2.72,0);cyl(well,.08,.08,1.5,0x49301c,0,1.9,0,10);
+// حوض تجميع مياه صغير متصل بقناة الري
+const pond=new THREE.Mesh(new THREE.CylinderGeometry(3.5,3.5,.16,32),mat(0x3989a5,.2));pond.rotation.x=0;pond.position.set(-24,.09,7);scene.add(pond);const pondEdge=new THREE.Mesh(new THREE.TorusGeometry(3.5,.18,8,32),mat(0x9a855e));pondEdge.rotation.x=Math.PI/2;pondEdge.position.set(-24,.16,7);scene.add(pondEdge);
+function fenceLine(x1,z1,x2,z2,steps=12){for(let i=0;i<=steps;i++){const t=i/steps,x=x1+(x2-x1)*t,z=z1+(z2-z1)*t;box(scene,.13,1.05,.13,0x75502d,x,.53,z)}const rail=new THREE.Mesh(new THREE.BoxGeometry(Math.hypot(x2-x1,z2-z1),.12,.12),mat(0x8a6136));rail.position.set((x1+x2)/2,.78,(z1+z2)/2);rail.rotation.y=Math.atan2(x2-x1,z2-z1);scene.add(rail)}
+fenceLine(-33,5,-33,-10,8);fenceLine(-33,-10,-20,-10,7);fenceLine(8,-3,17,-3,6);
+// أشجار سدر وشجيرات منخفضة حول المزرعة
+function shadeTree(x,z,s=1){const g=new THREE.Group();g.position.set(x,0,z);g.scale.setScalar(s);scene.add(g);cyl(g,.22,.34,2.5,0x76502d,0,1.25,0,9);for(let i=0;i<4;i++){const crown=new THREE.Mesh(new THREE.SphereGeometry(1.35,12,9),mat(0x47713a));crown.position.set(Math.cos(i*1.57)*.65,2.7+((i%2)*.25),Math.sin(i*1.57)*.65);g.add(crown)}}
+[[-37,13],[-42,-8],[19,12],[33,8],[-7,-43],[45,-31]].forEach((p,i)=>shadeTree(p[0],p[1],.8+(i%3)*.15));
+// طواحين هواء صغيرة لرفع مياه الري
+const windmill=new THREE.Group();windmill.position.set(13,0,-11);scene.add(windmill);cyl(windmill,.22,.32,5.5,0x8b8e86,0,2.75,0,10);cyl(windmill,.85,.85,.22,0x555e5b,0,5.35,.18,12);for(let i=0;i<4;i++){const blade=box(windmill,.18,2.2,.12,0xd9d4bd,0,6.45,.2);blade.rotation.z=i*Math.PI/2}
+function rock(x,z,s=1){const r=new THREE.Mesh(new THREE.DodecahedronGeometry(s,0),mat(0x887b68));r.position.set(x,s*.45,z);r.scale.set(1,.65,.8);r.castShadow=true;scene.add(r)}
+[[-45,18],[-39,21],[22,19],[36,15],[-50,-18],[48,-39],[4,-49]].forEach((p,i)=>rock(p[0],p[1],.7+(i%3)*.35));
 const field=new THREE.Group();field.position.set(0,.04,-18);scene.add(field);box(field,36,.13,29,0x69451f,0,0,0);
 const cropMeshes=[];for(let r=0;r<10;r++){let z=-13+r*2.7;box(field,34,.1,.16,0x9b7437,0,.12,z);for(let i=0;i<18;i++){let x=-16+i*1.85;const plant=new THREE.Group();plant.position.set(x,.18,z+.35);const stem=cyl(plant,.035,.045,.55,0x538b34,0,.27,0,7);const leaf=box(plant,.08,.28,.05,0x78a943,.08,.38,0);leaf.rotation.z=-.35;plant.visible=false;field.add(plant);cropMeshes.push(plant)}}
 const road=box(scene,12,.08,105,0x625b4c,27,.04,-19);for(let z=-67;z<30;z+=8)box(scene,.18,.03,2,0xe6d5a0,27,.1,z);
